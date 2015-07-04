@@ -1,5 +1,6 @@
 import 'dart:html';
 import 'dart:collection';
+import 'dart:math';
 
 const int CELL_SIZE = 10;
 
@@ -10,19 +11,28 @@ void main() {
 class Game {
   final CanvasElement _canvas;
   CanvasRenderingContext2D _ctx;
+  Random _random;
   num _lastTimestamp = 0;
+  int _rightEdgeX;
+  int _bottomEdgeY;
 
   Keyboard _keyboard = new Keyboard();
 
-  Snake snake;
+  Snake _snake;
+  Point _food;
 
   Game(CanvasElement this._canvas) {
     _ctx = _canvas.getContext('2d');
+    _rightEdgeX = _canvas.width ~/ CELL_SIZE;
+    _bottomEdgeY = _canvas.height ~/ CELL_SIZE;
+
     init();
   }
 
   void init() {
-    snake = new Snake();
+    _random = new Random();
+    _snake = new Snake();
+    _food = _randomPoint();
   }
 
   void run() {
@@ -34,13 +44,42 @@ class Game {
       ..fillRect(0, 0, _canvas.width, _canvas.height);
   }
 
+  Point _randomPoint() {
+    return new Point(_random.nextInt(_rightEdgeX), _random.nextInt(_bottomEdgeY));
+  }
+
+  void _checkForCollisions() {
+    // check bounds
+    if (_snake.head.x <= -1 || _snake.head.x >= _rightEdgeX ||
+      _snake.head.y <= -1 || _snake.head.y >= _bottomEdgeY ||
+      _snake.checkForBodyCollision()) {
+      init();
+    }
+
+    if (_snake.head == _food) {
+      _food = _randomPoint();
+      _snake.grow();
+    }
+  }
+
+  void _drawFood(CanvasRenderingContext2D ctx) {
+    final int x = _food.x * CELL_SIZE + 2;
+    final int y = _food.y * CELL_SIZE + 2;
+    final int size = CELL_SIZE - 4;
+
+    ctx..fillStyle = "blue"
+      ..fillRect(x, y, size, size);
+  }
+
   void update(num delta) {
     final num diff = delta - _lastTimestamp;
 
     if (diff > 50) {
       _lastTimestamp = delta;
       clear();
-      snake.update(_ctx, _keyboard);
+      _drawFood(_ctx);
+      _snake.update(_ctx, _keyboard);
+      _checkForCollisions();
     }
 
     // keep looping
@@ -49,18 +88,19 @@ class Game {
 }
 
 class Snake {
-  static const Point DIR_RIGHT = const Point(1, 0);
-  static const Point DIR_LEFT = const Point(-1, 0);
-  static const Point DIR_UP = const Point(0, -1);
-  static const Point DIR_DOWN = const Point(0, 1);
+  static const Point RIGHT = const Point(1, 0);
+  static const Point LEFT = const Point(-1, 0);
+  static const Point UP = const Point(0, -1);
+  static const Point DOWN = const Point(0, 1);
 
-  int length = 5;         // length of the snake's body (not counting the head)
-  List<Point> body = [];  // coordinates of the body segments
-  Point dir = DIR_RIGHT;
+  static const int START_LENGTH = 6;
+
+  List<Point> _body = [];   // coordinates of the body segments
+  Point _dir = RIGHT;   // current travel direction
 
   Snake() {
-    int i = length;
-    body = new List<Point>.generate(length + 1, (int index) => new Point(i--, 0));
+    int i = START_LENGTH - 1;
+    _body = new List<Point>.generate(START_LENGTH, (int index) => new Point(i--, 0));
   }
 
   void _draw(CanvasRenderingContext2D ctx) {
@@ -68,7 +108,7 @@ class Snake {
       ..strokeStyle = "white";
 
     // starting with the head, draw each body segment
-    for (Point p in body) {
+    for (Point p in _body) {
       final int x = p.x * CELL_SIZE;
       final int y = p.y * CELL_SIZE;
 
@@ -78,29 +118,40 @@ class Snake {
   }
 
   void _move() {
-    // calculate a new head position based on current direction
-    final Point newHead = body.first + dir;
+    grow();
 
     // remove the tail segment
-    body.removeLast();
-
-    // add the head at the new position
-    body.insert(0, newHead);
+    _body.removeLast();
   }
 
   void _checkInput(Keyboard keyboard) {
-    if (keyboard.isPressed(KeyCode.RIGHT) && dir != DIR_LEFT) {
-      dir = DIR_RIGHT;
+    if (keyboard.isPressed(KeyCode.RIGHT) && _dir != LEFT) {
+      _dir = RIGHT;
     }
-    else if (keyboard.isPressed(KeyCode.LEFT) && dir != DIR_RIGHT) {
-      dir = DIR_LEFT;
+    else if (keyboard.isPressed(KeyCode.LEFT) && _dir != RIGHT) {
+      _dir = LEFT;
     }
-    else if (keyboard.isPressed(KeyCode.UP) && dir != DIR_DOWN) {
-      dir = DIR_UP;
+    else if (keyboard.isPressed(KeyCode.UP) && _dir != DOWN) {
+      _dir = UP;
     }
-    else if (keyboard.isPressed(KeyCode.DOWN) && dir != DIR_UP) {
-      dir = DIR_DOWN;
+    else if (keyboard.isPressed(KeyCode.DOWN) && _dir != UP) {
+      _dir = DOWN;
     }
+  }
+
+  bool checkForBodyCollision() {
+    for (Point p in _body.skip(1)) {
+      if (p == head) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  void grow() {
+    // add new head based on current direction
+    _body.insert(0, head + _dir);
   }
 
   void update(CanvasRenderingContext2D ctx, Keyboard keyboard) {
@@ -108,6 +159,8 @@ class Snake {
     _move();
     _draw(ctx);
   }
+
+  Point get head => _body.first;
 }
 
 class Keyboard {
