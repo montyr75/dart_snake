@@ -1,88 +1,85 @@
 import 'dart:html';
+import 'dart:collection';
 
 const int CELL_SIZE = 10;
 
-enum Direction {
-  right,
-  left,
-  up,
-  down
-}
-
-CanvasElement canvas;
-CanvasRenderingContext2D ctx;
-
-Snake snake;
-
 void main() {
-  init();
+  new Game(querySelector('#canvas')..focus())..run();
 }
 
-void init() {
-  // set up canvas
-  canvas = querySelector('#canvas');
-  ctx = canvas.getContext('2d');
+class Game {
+  final CanvasElement _canvas;
+  CanvasRenderingContext2D _ctx;
+  num _lastTimestamp = 0;
 
-  // create snake
-  snake = new Snake();
+  Keyboard _keyboard = new Keyboard();
 
-  // start game loop
-  window.animationFrame.then(update);
-}
+  Snake snake;
 
-void clear() {
-  ctx.fillStyle = "white";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-}
+  Game(CanvasElement this._canvas) {
+    _ctx = _canvas.getContext('2d');
+    init();
+  }
 
-void update(num delta) {
-//  snake.move();
-  snake.draw();
+  void init() {
+    snake = new Snake();
+  }
 
-  // keep looping
-  window.animationFrame.then(update);
+  void run() {
+    window.animationFrame.then(update);
+  }
+
+  void clear() {
+    _ctx..fillStyle = "white"
+      ..fillRect(0, 0, _canvas.width, _canvas.height);
+  }
+
+  void update(num delta) {
+    final num diff = delta - _lastTimestamp;
+
+    if (diff > 50) {
+      _lastTimestamp = delta;
+      clear();
+      snake.update(_ctx, _keyboard);
+    }
+
+    // keep looping
+    run();
+  }
 }
 
 class Snake {
+  static const Point DIR_RIGHT = const Point(1, 0);
+  static const Point DIR_LEFT = const Point(-1, 0);
+  static const Point DIR_UP = const Point(0, -1);
+  static const Point DIR_DOWN = const Point(0, 1);
+
   int length = 5;         // length of the snake's body (not counting the head)
   List<Point> body = [];  // coordinates of the body segments
-  Direction dir = Direction.right;
+  Point dir = DIR_RIGHT;
 
   Snake() {
     int i = length;
     body = new List<Point>.generate(length + 1, (int index) => new Point(i--, 0));
-//    for (int i = length; i >= 0; i--) {
-//      body.add(new Point(i, 0));
-//    }
-
-    print(body);
   }
 
-  void draw() {
-    ctx.fillStyle = "green";
-    ctx.strokeStyle = "white";
+  void _draw(CanvasRenderingContext2D ctx) {
+    ctx..fillStyle = "green"
+      ..strokeStyle = "white";
 
     // starting with the head, draw each body segment
     for (Point p in body) {
-      int x = p.x * CELL_SIZE;
-      int y = p.y * CELL_SIZE;
+      final int x = p.x * CELL_SIZE;
+      final int y = p.y * CELL_SIZE;
 
-      ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
-      ctx.strokeRect(x, y, CELL_SIZE, CELL_SIZE);
+      ctx..fillRect(x, y, CELL_SIZE, CELL_SIZE)
+        ..strokeRect(x, y, CELL_SIZE, CELL_SIZE);
     }
   }
 
-  void move() {
+  void _move() {
     // calculate a new head position based on current direction
-    Point head = body.first;
-    Point newHead;
-
-    switch (dir) {
-      case Direction.right: newHead = new Point(head.x + 1, head.y); break;
-      case Direction.left: newHead = new Point(head.x - 1, head.y); break;
-      case Direction.up: newHead = new Point(head.x, head.y - 1); break;
-      case Direction.down: newHead = new Point(head.x, head.y + 1); break;
-    }
+    final Point newHead = body.first + dir;
 
     // remove the tail segment
     body.removeLast();
@@ -90,4 +87,43 @@ class Snake {
     // add the head at the new position
     body.insert(0, newHead);
   }
+
+  void _checkInput(Keyboard keyboard) {
+    if (keyboard.isPressed(KeyCode.RIGHT) && dir != DIR_LEFT) {
+      dir = DIR_RIGHT;
+    }
+    else if (keyboard.isPressed(KeyCode.LEFT) && dir != DIR_RIGHT) {
+      dir = DIR_LEFT;
+    }
+    else if (keyboard.isPressed(KeyCode.UP) && dir != DIR_DOWN) {
+      dir = DIR_UP;
+    }
+    else if (keyboard.isPressed(KeyCode.DOWN) && dir != DIR_UP) {
+      dir = DIR_DOWN;
+    }
+  }
+
+  void update(CanvasRenderingContext2D ctx, Keyboard keyboard) {
+    _checkInput(keyboard);
+    _move();
+    _draw(ctx);
+  }
+}
+
+class Keyboard {
+  HashMap<int, int> _keys = new HashMap<int, int>();
+
+  Keyboard() {
+    window.onKeyDown.listen((KeyboardEvent event) {
+      if (!_keys.containsKey(event.keyCode)) {
+        _keys[event.keyCode] = event.timeStamp;
+      }
+    });
+
+    window.onKeyUp.listen((KeyboardEvent event) {
+      _keys.remove(event.keyCode);
+    });
+  }
+
+  bool isPressed(int keyCode) => _keys.containsKey(keyCode);
 }

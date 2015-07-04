@@ -8,6 +8,8 @@ html, body {
   font-family: 'Roboto', sans-serif;
 }
 
-canvas {
+#wrapper {
+  width: 450px;
+  margin: auto;
   border: solid thin black;
 }
