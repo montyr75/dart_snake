@@ -3,12 +3,24 @@ import 'dart:collection';
 import 'dart:math';
 
 const int CELL_SIZE = 10;
-
 void main() {
   new Game(querySelector('#canvas')..focus())..run();
 }
 
+void drawCell(CanvasRenderingContext2D ctx, Point coords, String color) {
+  ctx..fillStyle = color
+    ..strokeStyle = "white";
+
+  final int x = coords.x * CELL_SIZE;
+  final int y = coords.y * CELL_SIZE;
+
+  ctx..fillRect(x, y, CELL_SIZE, CELL_SIZE)
+    ..strokeRect(x, y, CELL_SIZE, CELL_SIZE);
+}
+
 class Game {
+  static const int GAME_SPEED = 50;     // smaller numbers are faster
+
   final CanvasElement _canvas;
   CanvasRenderingContext2D _ctx;
   Random _random;
@@ -56,28 +68,20 @@ class Game {
       init();
     }
 
+    // check for collision with food
     if (_snake.head == _food) {
       _food = _randomPoint();
       _snake.grow();
     }
   }
 
-  void _drawFood(CanvasRenderingContext2D ctx) {
-    final int x = _food.x * CELL_SIZE + 2;
-    final int y = _food.y * CELL_SIZE + 2;
-    final int size = CELL_SIZE - 4;
-
-    ctx..fillStyle = "blue"
-      ..fillRect(x, y, size, size);
-  }
-
   void update(num delta) {
     final num diff = delta - _lastTimestamp;
 
-    if (diff > 50) {
+    if (diff > GAME_SPEED) {
       _lastTimestamp = delta;
       clear();
-      _drawFood(_ctx);
+      drawCell(_ctx, _food, "blue");
       _snake.update(_ctx, _keyboard);
       _checkForCollisions();
     }
@@ -104,16 +108,9 @@ class Snake {
   }
 
   void _draw(CanvasRenderingContext2D ctx) {
-    ctx..fillStyle = "green"
-      ..strokeStyle = "white";
-
     // starting with the head, draw each body segment
     for (Point p in _body) {
-      final int x = p.x * CELL_SIZE;
-      final int y = p.y * CELL_SIZE;
-
-      ctx..fillRect(x, y, CELL_SIZE, CELL_SIZE)
-        ..strokeRect(x, y, CELL_SIZE, CELL_SIZE);
+      drawCell(ctx, p, "green");
     }
   }
 
