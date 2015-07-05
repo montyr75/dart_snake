@@ -3,19 +3,9 @@ import 'dart:collection';
 import 'dart:math';
 
 const int CELL_SIZE = 10;
+
 void main() {
   new Game(querySelector('#canvas')..focus())..run();
-}
-
-void drawCell(CanvasRenderingContext2D ctx, Point coords, String color) {
-  ctx..fillStyle = color
-    ..strokeStyle = "white";
-
-  final int x = coords.x * CELL_SIZE;
-  final int y = coords.y * CELL_SIZE;
-
-  ctx..fillRect(x, y, CELL_SIZE, CELL_SIZE)
-    ..strokeRect(x, y, CELL_SIZE, CELL_SIZE);
 }
 
 class Game {
@@ -47,11 +37,7 @@ class Game {
     _food = _randomPoint();
   }
 
-  void run() {
-    window.animationFrame.then(update);
-  }
-
-  void clear() {
+  void _clear() {
     _ctx..fillStyle = "white"
       ..fillRect(0, 0, _canvas.width, _canvas.height);
   }
@@ -61,11 +47,12 @@ class Game {
   }
 
   void _checkForCollisions() {
-    // check bounds
+    // check death conditions
     if (_snake.head.x <= -1 || _snake.head.x >= _rightEdgeX ||
       _snake.head.y <= -1 || _snake.head.y >= _bottomEdgeY ||
       _snake.checkForBodyCollision()) {
       init();
+      return;
     }
 
     // check for collision with food
@@ -75,12 +62,16 @@ class Game {
     }
   }
 
+  void run() {
+    window.animationFrame.then(update);
+  }
+
   void update(num delta) {
     final num diff = delta - _lastTimestamp;
 
     if (diff > GAME_SPEED) {
       _lastTimestamp = delta;
-      clear();
+      _clear();
       drawCell(_ctx, _food, "blue");
       _snake.update(_ctx, _keyboard);
       _checkForCollisions();
@@ -100,7 +91,7 @@ class Snake {
   static const int START_LENGTH = 6;
 
   List<Point> _body = [];   // coordinates of the body segments
-  Point _dir = RIGHT;   // current travel direction
+  Point _dir = RIGHT;       // current travel direction
 
   Snake() {
     int i = START_LENGTH - 1;
@@ -115,6 +106,7 @@ class Snake {
   }
 
   void _move() {
+    // add a new head segment
     grow();
 
     // remove the tail segment
@@ -176,4 +168,15 @@ class Keyboard {
   }
 
   bool isPressed(int keyCode) => _keys.containsKey(keyCode);
+}
+
+void drawCell(CanvasRenderingContext2D ctx, Point coords, String color) {
+  ctx..fillStyle = color
+    ..strokeStyle = "white";
+
+  final int x = coords.x * CELL_SIZE;
+  final int y = coords.y * CELL_SIZE;
+
+  ctx..fillRect(x, y, CELL_SIZE, CELL_SIZE)
+    ..strokeRect(x, y, CELL_SIZE, CELL_SIZE);
 }
