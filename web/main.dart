@@ -1,18 +1,38 @@
 import 'dart:html';
-import 'dart:collection';
 import 'dart:math';
+import 'dart:collection';
 
 const int CELL_SIZE = 10;
 
+CanvasElement canvas;
+CanvasRenderingContext2D ctx;
+
 void main() {
-  new Game(querySelector('#canvas')..focus())..run();
+  canvas = querySelector('#canvas')..focus();
+  ctx = canvas.getContext('2d');
+
+  new Game()..run();
+}
+
+void drawCell(Point coords, String color) {
+  ctx..fillStyle = color
+    ..strokeStyle = "white";
+
+  final int x = coords.x * CELL_SIZE;
+  final int y = coords.y * CELL_SIZE;
+
+  ctx..fillRect(x, y, CELL_SIZE, CELL_SIZE)
+    ..strokeRect(x, y, CELL_SIZE, CELL_SIZE);
+}
+
+void clear() {
+  ctx..fillStyle = "white"
+    ..fillRect(0, 0, canvas.width, canvas.height);
 }
 
 class Game {
   static const int GAME_SPEED = 50;     // smaller numbers are faster
 
-  final CanvasElement _canvas;
-  CanvasRenderingContext2D _ctx;
   Random _random;
   num _lastTimestamp = 0;
   int _rightEdgeX;
@@ -23,10 +43,9 @@ class Game {
   Snake _snake;
   Point _food;
 
-  Game(CanvasElement this._canvas) {
-    _ctx = _canvas.getContext('2d');
-    _rightEdgeX = _canvas.width ~/ CELL_SIZE;
-    _bottomEdgeY = _canvas.height ~/ CELL_SIZE;
+  Game() {
+    _rightEdgeX = canvas.width ~/ CELL_SIZE;
+    _bottomEdgeY = canvas.height ~/ CELL_SIZE;
 
     init();
   }
@@ -35,11 +54,6 @@ class Game {
     _random = new Random();
     _snake = new Snake();
     _food = _randomPoint();
-  }
-
-  void _clear() {
-    _ctx..fillStyle = "white"
-      ..fillRect(0, 0, _canvas.width, _canvas.height);
   }
 
   Point _randomPoint() {
@@ -71,9 +85,9 @@ class Game {
 
     if (diff > GAME_SPEED) {
       _lastTimestamp = delta;
-      _clear();
-      drawCell(_ctx, _food, "blue");
-      _snake.update(_ctx, _keyboard);
+      clear();
+      drawCell(_food, "blue");
+      _snake.update(ctx, _keyboard);
       _checkForCollisions();
     }
 
@@ -83,14 +97,14 @@ class Game {
 }
 
 class Snake {
-  static const Point RIGHT = const Point(1, 0);
   static const Point LEFT = const Point(-1, 0);
+  static const Point RIGHT = const Point(1, 0);
   static const Point UP = const Point(0, -1);
   static const Point DOWN = const Point(0, 1);
 
   static const int START_LENGTH = 6;
 
-  List<Point> _body = [];   // coordinates of the body segments
+  List<Point> _body;        // coordinates of the body segments
   Point _dir = RIGHT;       // current travel direction
 
   Snake() {
@@ -98,10 +112,12 @@ class Snake {
     _body = new List<Point>.generate(START_LENGTH, (int index) => new Point(i--, 0));
   }
 
+  Point get head => _body.first;
+
   void _draw(CanvasRenderingContext2D ctx) {
     // starting with the head, draw each body segment
     for (Point p in _body) {
-      drawCell(ctx, p, "green");
+      drawCell(p, "green");
     }
   }
 
@@ -114,11 +130,11 @@ class Snake {
   }
 
   void _checkInput(Keyboard keyboard) {
-    if (keyboard.isPressed(KeyCode.RIGHT) && _dir != LEFT) {
-      _dir = RIGHT;
+    if (keyboard.isPressed(KeyCode.LEFT) && _dir != RIGHT) {
+    _dir = LEFT;
     }
-    else if (keyboard.isPressed(KeyCode.LEFT) && _dir != RIGHT) {
-      _dir = LEFT;
+    else if (keyboard.isPressed(KeyCode.RIGHT) && _dir != LEFT) {
+      _dir = RIGHT;
     }
     else if (keyboard.isPressed(KeyCode.UP) && _dir != DOWN) {
       _dir = UP;
@@ -148,8 +164,6 @@ class Snake {
     _move();
     _draw(ctx);
   }
-
-  Point get head => _body.first;
 }
 
 class Keyboard {
@@ -168,15 +182,4 @@ class Keyboard {
   }
 
   bool isPressed(int keyCode) => _keys.containsKey(keyCode);
-}
-
-void drawCell(CanvasRenderingContext2D ctx, Point coords, String color) {
-  ctx..fillStyle = color
-    ..strokeStyle = "white";
-
-  final int x = coords.x * CELL_SIZE;
-  final int y = coords.y * CELL_SIZE;
-
-  ctx..fillRect(x, y, CELL_SIZE, CELL_SIZE)
-    ..strokeRect(x, y, CELL_SIZE, CELL_SIZE);
 }
