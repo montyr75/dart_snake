@@ -6,6 +6,7 @@ const int CELL_SIZE = 10;
 
 CanvasElement canvas;
 CanvasRenderingContext2D ctx;
+Keyboard keyboard = new Keyboard();
 
 void main() {
   canvas = querySelector('#canvas')..focus();
@@ -37,8 +38,6 @@ class Game {
   num _lastTimestamp = 0;
   int _rightEdgeX;
   int _bottomEdgeY;
-
-  Keyboard _keyboard = new Keyboard();
 
   Snake _snake;
   Point _food;
@@ -87,7 +86,7 @@ class Game {
       _lastTimestamp = delta;
       clear();
       drawCell(_food, "blue");
-      _snake.update(ctx, _keyboard);
+      _snake.update();
       _checkForCollisions();
     }
 
@@ -114,11 +113,24 @@ class Snake {
 
   Point get head => _body.first;
 
-  void _draw(CanvasRenderingContext2D ctx) {
-    // starting with the head, draw each body segment
-    for (Point p in _body) {
-      drawCell(p, "green");
+  void _checkInput() {
+    if (keyboard.isPressed(KeyCode.LEFT) && _dir != RIGHT) {
+      _dir = LEFT;
     }
+    else if (keyboard.isPressed(KeyCode.RIGHT) && _dir != LEFT) {
+      _dir = RIGHT;
+    }
+    else if (keyboard.isPressed(KeyCode.UP) && _dir != DOWN) {
+      _dir = UP;
+    }
+    else if (keyboard.isPressed(KeyCode.DOWN) && _dir != UP) {
+      _dir = DOWN;
+    }
+  }
+
+  void grow() {
+    // add new head based on current direction
+    _body.insert(0, head + _dir);
   }
 
   void _move() {
@@ -129,18 +141,10 @@ class Snake {
     _body.removeLast();
   }
 
-  void _checkInput(Keyboard keyboard) {
-    if (keyboard.isPressed(KeyCode.LEFT) && _dir != RIGHT) {
-    _dir = LEFT;
-    }
-    else if (keyboard.isPressed(KeyCode.RIGHT) && _dir != LEFT) {
-      _dir = RIGHT;
-    }
-    else if (keyboard.isPressed(KeyCode.UP) && _dir != DOWN) {
-      _dir = UP;
-    }
-    else if (keyboard.isPressed(KeyCode.DOWN) && _dir != UP) {
-      _dir = DOWN;
+  void _draw() {
+    // starting with the head, draw each body segment
+    for (Point p in _body) {
+      drawCell(p, "green");
     }
   }
 
@@ -154,15 +158,10 @@ class Snake {
     return false;
   }
 
-  void grow() {
-    // add new head based on current direction
-    _body.insert(0, head + _dir);
-  }
-
-  void update(CanvasRenderingContext2D ctx, Keyboard keyboard) {
-    _checkInput(keyboard);
+  void update() {
+    _checkInput();
     _move();
-    _draw(ctx);
+    _draw();
   }
 }
 
