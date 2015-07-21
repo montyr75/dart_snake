@@ -32,10 +32,12 @@ void clear() {
 }
 
 class Game {
-  static const int GAME_SPEED = 50;     // smaller numbers are faster
+  // smaller numbers make the game run faster
+  static const num GAME_SPEED = 50;
 
-  Random _random;
-  num _lastTimestamp = 0;
+  num _lastTimeStamp = 0;
+
+  // a few convenience variables to simplify calculations
   int _rightEdgeX;
   int _bottomEdgeY;
 
@@ -50,28 +52,27 @@ class Game {
   }
 
   void init() {
-    _random = new Random();
     _snake = new Snake();
     _food = _randomPoint();
   }
 
   Point _randomPoint() {
-    return new Point(_random.nextInt(_rightEdgeX), _random.nextInt(_bottomEdgeY));
+    Random random = new Random();
+    return new Point(random.nextInt(_rightEdgeX), random.nextInt(_bottomEdgeY));
   }
 
   void _checkForCollisions() {
-    // check death conditions
-    if (_snake.head.x <= -1 || _snake.head.x >= _rightEdgeX ||
-      _snake.head.y <= -1 || _snake.head.y >= _bottomEdgeY ||
-      _snake.checkForBodyCollision()) {
-      init();
-      return;
-    }
-
     // check for collision with food
     if (_snake.head == _food) {
-      _food = _randomPoint();
       _snake.grow();
+      _food = _randomPoint();
+    }
+
+    // check death conditions
+    if (_snake.head.x <= -1 || _snake.head.x >= _rightEdgeX ||
+    _snake.head.y <= -1 || _snake.head.y >= _bottomEdgeY ||
+    _snake.checkForBodyCollision()) {
+      init();
     }
   }
 
@@ -80,10 +81,10 @@ class Game {
   }
 
   void update(num delta) {
-    final num diff = delta - _lastTimestamp;
+    final num diff = delta - _lastTimeStamp;
 
     if (diff > GAME_SPEED) {
-      _lastTimestamp = delta;
+      _lastTimeStamp = delta;
       clear();
       drawCell(_food, "blue");
       _snake.update();
