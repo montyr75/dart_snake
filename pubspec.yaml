@@ -1,9 +1,13 @@
 name: 'dart_snake'
-version: 0.0.1
-description: An absolute bare-bones web app.
-#author: <your name> <email@example.com>
-#homepage: https://www.example.com
+version: 0.0.2
+description: The classic Snake game as a Dart web app.
+
 environment:
-  sdk: '>=1.0.0 <2.0.0'
-dependencies:
-  browser: '>=0.10.0 <0.11.0'
+  sdk: '>=1.24.0 <2.0.0'
+
+dev_dependencies:
+  browser: ^0.10.0
+  dart_to_js_script_rewriter: ^1.0.1
+
+transformers:
+- dart_to_js_script_rewriter

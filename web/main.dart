@@ -167,7 +167,7 @@ class Snake {
 }
 
 class Keyboard {
-  HashMap<int, int> _keys = new HashMap<int, int>();
+  HashMap<int, num> _keys = new HashMap<int, num>();
 
   Keyboard() {
     window.onKeyDown.listen((KeyboardEvent event) {

@@ -2,16 +2,11 @@
 ## Dart
 #############
 
-build/
-packages/
 .idea/
+build/
 pubspec.lock
 .buildlog
-.project
 .pub/
-.project
-*.dart.js
-*.js_
-*.js.deps
-*.js.map
 .packages
+.project
+.dart_tool
