@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:html';
 import 'dart:math';
 import 'dart:collection';
@@ -76,8 +77,8 @@ class Game {
     }
   }
 
-  void run() {
-    window.animationFrame.then(update);
+  Future run() async {
+    update(await window.animationFrame);
   }
 
   void update(num delta) {
@@ -171,9 +172,7 @@ class Keyboard {
 
   Keyboard() {
     window.onKeyDown.listen((KeyboardEvent event) {
-      if (!_keys.containsKey(event.keyCode)) {
-        _keys[event.keyCode] = event.timeStamp;
-      }
+      _keys.putIfAbsent(event.keyCode, () => event.timeStamp);
     });
 
     window.onKeyUp.listen((KeyboardEvent event) {
