@@ -1,4 +1,7 @@
 # Changelog
+## 0.0.3
+
+- Updated to use newer Dart features.
 
 ## 0.0.2
 

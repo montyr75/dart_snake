@@ -1,5 +1,5 @@
 name: 'dart_snake'
-version: 0.0.2
+version: 0.0.3
 description: The classic Snake game as a Dart web app.
 
 environment:
