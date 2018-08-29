@@ -1,12 +1,11 @@
-#############
-## Dart
-#############
-
-.idea/
+# Files and directories created by pub
+.dart_tool/
+.packages
 build/
 pubspec.lock
-.buildlog
-.pub/
-.packages
-.project
-.dart_tool
+
+# Directory created by dartdoc
+doc/api/
+
+# IDE stuff
+.idea/
